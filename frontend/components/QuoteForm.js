@@ -1,4 +1,5 @@
 import React, { useReducer } from 'react'
+import { useCreateQuoteMutation } from "../state/quotesApi.js";
 
 const CHANGE_INPUT = 'CHANGE_INPUT'
 const RESET_FORM = 'RESET_FORM'
@@ -22,6 +23,7 @@ const reducer = (state, action) => {
 }
 
 export default function TodoForm() {
+  const [ createQuote, { error: errorMessage, isLoading: creatingQuote } ] = useCreateQuoteMutation();
   const [state, dispatch] = useReducer(reducer, initialState)
   const onChange = ({ target: { name, value } }) => {
     dispatch({ type: CHANGE_INPUT, payload: { name, value } })
@@ -31,12 +33,21 @@ export default function TodoForm() {
   }
   const onNewQuote = evt => {
     evt.preventDefault()
-    resetForm()
+    const { authorName, quoteText } = state;
+    createQuote({ authorName, quoteText })
+      .unwrap()
+      .then((data) => {
+        console.log(data);
+        resetForm();
+      })
+      .catch((error) => {
+        console.log(error);
+      })
   }
 
   return (
     <form id="quoteForm" onSubmit={onNewQuote}>
-      <h3>New Quote Form</h3>
+      <h3>New Quote Form {errorMessage && errorMessage.data.message} {creatingQuote && " being created..."}</h3>
       <label><span>Author:</span>
         <input
           type='text'
